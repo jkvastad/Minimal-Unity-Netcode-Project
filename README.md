@@ -1,4 +1,5 @@
 TODO: Proper markup and pictures
+TODO: Links to unity resources on setting up multiplayer
 TODO: note where player log is located
 TODO: netcode 1.4.0 is broken? Fails to connect with ICMP port unreachable, but works with Netcode 1.1.0
 
