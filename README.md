@@ -1,7 +1,8 @@
+TODO: add release distributable
 # Minimal Unity Netcode Project
 A minimal project for testing multiplayer connection over IP with Unity's Netcode for GameObjects.
 
-This project's intended audience is people who want to get started with multiplayer in Unity. When starting out, there are a lot of problems which can arise when following the [official Netcode tutorials](https://docs-multiplayer.unity3d.com/netcode/current/about/). The purpose of this project is to minimize the number of things which can go wrong, while still being able to test the basic use cases of online multiplayer connections. That is, before we can start iterating actual multiplayer gameplay, we have to connect clients and hosts over WAN and LAN.
+The intended audience for Minimal Unity Netcode Project (MUNP) is people who want to get started with multiplayer in Unity. When starting out, there are a lot of problems which can arise when following the [official Netcode tutorials](https://docs-multiplayer.unity3d.com/netcode/current/about/). The purpose of this project is to minimize the number of things which can go wrong, while still being able to test the basic use cases of online multiplayer connections. That is, before we can start iterating actual multiplayer gameplay, we have to connect clients and hosts over WAN and LAN.
 
 ## Connecting over IP
 ![one does not simply connect over ip](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/7f7f6cb1-ef0b-41cc-930b-ab5cccf9ceed)
@@ -24,11 +25,11 @@ To illustrate what can go wrong, let's follow a data packet's example journey:
 7. At computer B on LAN 2 the packet must pass computer B's firewall. The firewall must have an inbound rule for the packet's port X, destination IP L, and protocol Z (TCP or UDP).
 8. Finally, the multiplayer game on computer B expecting packets on port X, destination IP L, and protocol Z (TCP or UDP) can receive the data. 
 
-Notes on return packages: 
+_Notes on return packages:_
 * When computer B responds with packets to A, it may not be necessary to have outbound/inbound firewall rules for the return packet if the [firewalls are stateful](https://en.wikipedia.org/wiki/Stateful_firewall) (e.g. Microsoft Defender Firewall). Thus firewall rules are usually only necessary for establishing connections rather than per package.
 * The routers handling return packages are as well likely stateful and will not need explicit port forwarding for response packages, but will have kept track of ports and addresses used to identify a packet as being a response.
 
-Notes on NAT:
+_Notes on NAT:_
 * In the same way your computer is usually given a LAN IP behind a router, your router may itself have received a LAN IP from your ISP behind another router. This is called [Carrier Grade NAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT). Without a public IP, you cannot directly host over WAN, as there is no IP for clients to connect to. There are workarounds in the form of connecting to a server which has a public IP and then bouncing traffic via that server. Depending on your ISP you might be able to receive a public IP with more or less hassle.
 
 As can be seen, there are a lot of things which have to match up and plenty of ways for a packet to become dropped, having nowhere to go. 
@@ -37,11 +38,42 @@ Sort of like a very pedantic postal service.
 
 ## Use Cases
 
+Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the build file here **TODO: add link**, then run the .exe file to start an instance of MUNP.
+
+### Localhost to Localhost
+
+The simplest connection which "should work". 
+
+1. Computer A starts two instances of MUNP, instance a and b.
+2. Instance a enters IP 127.0.0.1 and clicks Listen Server. A cube should appear in the window.
+3. Instance b enters IP 127.0.0.1 and clicks client. Another cube should spawn, being rocketed away due to rigidbody collision.
+
+![MUNP Listen Server host](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/634fd191-5fbe-4019-ae4c-1f60582c2de0)
+![MUNP Listen Server client](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/beb8bbca-1c79-4e0f-82fb-62bafc7f3b97)
+
+### Computer A on Lan 1 to computer A on Lan 1
+
+Similar to localhost, but using computer A's LAN IP. On e.g. Windows this can be found by running the command ipconfig in the command prompt. 
+
+* If you host on computer A localhost, you cannot connect to computer A on A's LAN IP and vice versa - the IPs must match.
 
 
-TODO: note where player log is located
-TODO: netcode 1.4.0 is broken? Fails to connect with ICMP port unreachable, but works with Netcode 1.1.0
-TODO: note on NAT and carrier grade NAT - your "remote IP" is actually behind a large router and cannot be addressed remotely.
+## Technical notes on MUNP
+
+* MUNP can host a listen server (server + client) to which clients may connect.
+* Since MUNP is purposefully made to be minimal, there is no error handling for bad connections. Think of each MUNP instance as a one-shot program, if something goes wrong just close and restart.
+* Follow the "step by step project recreation.txt" if you want to go through creating MUNP manually.
+* MUNP is made for Unity 2022.2.1f1 using Netcode 1.1.0. Be wary that there is no guarantee untested Netcode packages actually work - a hard to spot problem. You can always make your own MUNP to check a specific configuration.
+* If on Windows and the screen size in MUNP is not the one specified in Unity's player settings you need to manually delete the registry keys storing the window size, using window's Registry Editor. See [peter77's Unity Forum answer](https://forum.unity.com/threads/default-screen-dimensions-being-ignored-after-build.500178/):
+  * ```
+    These keys are located under:
+    Computer\HKEY_CURRENT_USER\Software\<Company Name>\<Product Name>\
+    Where <Company Name> and <Product Name> must be replaced with whatever you entered for those in the PlayerSettings.
+    The keys you want to remove are:
+    	Screenmanager Resolution Height
+    	Screenmanager Resolution Width
+    	Screenmanager Is Fullscreen mode
+    ```
 
 Tools for debugging:
 Wireshark - network diagnostics tool for looking inside network interfaces, such as the loopback interface (127.0.0.1/localhost) and ethernet/wifi connections. Use e.g. filter "udp.port == 7777 || tcp.port == 7777" to filter for packets sent to Unity's default port.
