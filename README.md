@@ -1,16 +1,33 @@
 # Minimal Unity Netcode Project
 A minimal project for testing multiplayer connection over IP with Unity's Netcode for GameObjects.
 
-This project's intended audience is people who want to get started with multiplayer in Unity. When starting out, there are a lot of problems which can arise when following the [official Netcode tutorials](https://docs-multiplayer.unity3d.com/netcode/current/about/). The purpose of this project is to minimize the number of things which can go wrong, while still being able to test the basic usecases of online multiplayer connections. That is, before we can do actual multiplayer gameplay, we have to connect clients and hosts over WAN and LAN.
+This project's intended audience is people who want to get started with multiplayer in Unity. When starting out, there are a lot of problems which can arise when following the [official Netcode tutorials](https://docs-multiplayer.unity3d.com/netcode/current/about/). The purpose of this project is to minimize the number of things which can go wrong, while still being able to test the basic use cases of online multiplayer connections. That is, before we can start iterating actual multiplayer gameplay, we have to connect clients and hosts over WAN and LAN.
 
 ## Connecting over IP
 ![one does not simply connect over ip](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/7f7f6cb1-ef0b-41cc-930b-ab5cccf9ceed)
+
+The purpose of connecting host and client is to send data packets back and forth. (See [OSI Model](https://en.wikipedia.org/wiki/OSI_model) and e.g. [Transport Layer](https://en.wikipedia.org/wiki/Transport_layer) for more theoretical background.)
+
+To illustrate what can go wrong, let's follow a data packet's example journey:
+
+0. Computer A on LAN 1  ([Local Area Network](https://en.wikipedia.org/wiki/Local_area_network)) wants to establish a connection over IP with computer B, possibly on LAN 2, to play a multiplayer game.
+1. Computer A sends a relevant data packet through its firewall.
+2. The firewall must have an outgoing rule for the packet's destination port X, destination IP Y, and protocol Z (TCP or UDP).
+3. The packet is sent out through a relevant interface (e.g. wifi/ethernet with LAN IP 192.168.m.n).
+   - If the destination is the loopback interface Localhost on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1 then the packet is looped back to the destination program at port X.
+   - If the destination is LAN or WAN ([Wide Area Network](https://en.wikipedia.org/wiki/Wide_area_network), the largest of which is the Internet) it is sent to the connected router (usually 192.168.0.1 or 192.168.1.1)
+4. At your router, the packet is redirected (or routed) to its destination IP (possibly after passing rules in a firewall at the router).
+   - If the destination is on LAN 1 the packet is routed to destination IP Y.
+   - If the destination is a WAN address (a.k.a. remote address) the packet is sent via your router's remote address R, an address automatically provided by your ISP ([Internet Service Provider](https://en.wikipedia.org/wiki/Internet_service_provider)).
+5. Your ISP routes the packet to the receiving router at remote address Y.
+6. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP L, not a remote address. This is where port forwarding comes in.
 
 
 TODO: Proper markup and pictures
 TODO: Links to unity resources on setting up multiplayer
 TODO: note where player log is located
 TODO: netcode 1.4.0 is broken? Fails to connect with ICMP port unreachable, but works with Netcode 1.1.0
+TODO: note on NAT and carrier grade NAT - your "remote IP" is actually behind a large router and cannot be addressed remotely.
 
 Tools for debugging:
 Wireshark - network diagnostics tool for looking inside network interfaces, such as the loopback interface (127.0.0.1/localhost) and ethernet/wifi connections. Use e.g. filter "udp.port == 7777 || tcp.port == 7777" to filter for packets sent to Unity's default port.
