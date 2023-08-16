@@ -12,19 +12,33 @@ To illustrate what can go wrong, let's follow a data packet's example journey:
 
 0. Computer A on LAN 1  ([Local Area Network](https://en.wikipedia.org/wiki/Local_area_network)) wants to establish a connection over IP with computer B, possibly on LAN 2, to play a multiplayer game.
 1. Computer A sends a relevant data packet through its firewall.
-2. The firewall must have an outgoing rule for the packet's destination port X, destination IP Y, and protocol Z (TCP or UDP).
+2. The firewall must have an outbound rule for the packet's destination port X, destination IP Y, and protocol Z (TCP or UDP).
 3. The packet is sent out through a relevant interface (e.g. wifi/ethernet with LAN IP 192.168.m.n).
-   - If the destination is the loopback interface Localhost on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1 then the packet is looped back to the destination program at port X.
-   - If the destination is LAN or WAN ([Wide Area Network](https://en.wikipedia.org/wiki/Wide_area_network), the largest of which is the Internet) it is sent to the connected router (usually 192.168.0.1 or 192.168.1.1)
+   - If the destination is computer A itself, the packet is sent through the loopback interface (a.k.a. Localhost) on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1. The packet is then looped back to the destination program at port X.
+   - If the destination is LAN or WAN ([Wide Area Network](https://en.wikipedia.org/wiki/Wide_area_network), the largest of which is the Internet) it is sent to a connected router (usually with address 192.168.0.1 or 192.168.1.1)
 4. At your router, the packet is redirected (or routed) to its destination IP (possibly after passing rules in a firewall at the router).
-   - If the destination is on LAN 1 the packet is routed to destination IP Y.
-   - If the destination is a WAN address (a.k.a. remote address) the packet is sent via your router's remote address R, an address automatically provided by your ISP ([Internet Service Provider](https://en.wikipedia.org/wiki/Internet_service_provider)).
-5. Your ISP routes the packet to the receiving router at remote address Y.
-6. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP L, not a remote address. This is where port forwarding comes in.
+   - If the destination is on LAN 1 the packet is routed to destination IP Y (this skips to step 7).
+   - If the destination is a WAN address (a.k.a. remote address or public IP) the packet is sent via your router's remote address R, an address automatically provided by your ISP ([Internet Service Provider](https://en.wikipedia.org/wiki/Internet_service_provider)).
+5. Your ISP routes the packet to the receiving router at remote address Y (possibly after passing rules in a firewall at the receiving router).
+6. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP "L", not a remote address. This is where NAT ([Network Address Translation](https://en.wikipedia.org/wiki/Network_address_translation)) comes in, a simple form of which is [port forwarding](https://en.wikipedia.org/wiki/Port_forwarding). By having set up a port forwarding rule in the router for port X, the packets destination IP is changed (translated) to L from Y. The packet is then routed to L.
+7. At computer B on LAN 2 the packet must pass computer B's firewall. The firewall must have an inbound rule for the packet's port X, destination IP L, and protocol Z (TCP or UDP).
+8. Finally, the multiplayer game on computer B expecting packets on port X, destination IP L, and protocol Z (TCP or UDP) can receive the data. 
+
+Notes on return packages: 
+* When computer B responds with packets to A, it may not be necessary to have outbound/inbound firewall rules for the return packet if the [firewalls are stateful](https://en.wikipedia.org/wiki/Stateful_firewall) (e.g. Microsoft Defender Firewall). Thus firewall rules are usually only necessary for establishing connections rather than per package.
+* The routers handling return packages are as well likely stateful and will not need explicit port forwarding for response packages, but will have kept track of ports and addresses used to identify a packet as being a response.
+
+Notes on NAT:
+* In the same way your computer is usually given a LAN IP behind a router, your router may itself have received a LAN IP from your ISP behind another router. This is called [Carrier Grade NAT](https://en.wikipedia.org/wiki/Carrier-grade_NAT). Without a public IP, you cannot directly host over WAN, as there is no IP for clients to connect to. There are workarounds in the form of connecting to a server which has a public IP and then bouncing traffic via that server. Depending on your ISP you might be able to receive a public IP with more or less hassle.
+
+As can be seen, there are a lot of things which have to match up and plenty of ways for a packet to become dropped, having nowhere to go. 
+
+Sort of like a very pedantic postal service.
+
+## Use Cases
 
 
-TODO: Proper markup and pictures
-TODO: Links to unity resources on setting up multiplayer
+
 TODO: note where player log is located
 TODO: netcode 1.4.0 is broken? Fails to connect with ICMP port unreachable, but works with Netcode 1.1.0
 TODO: note on NAT and carrier grade NAT - your "remote IP" is actually behind a large router and cannot be addressed remotely.
