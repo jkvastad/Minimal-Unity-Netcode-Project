@@ -1,9 +1,16 @@
+# Minimal Unity Netcode Project
+A minimal project for testing multiplayer connection over IP with Unity's Netcode for GameObjects.
+
+This project's intended audience is people who want to get started with multiplayer in Unity. When starting out, there are a lot of problems which can arise when following the [official Netcode tutorials](https://docs-multiplayer.unity3d.com/netcode/current/about/). The purpose of this project is to minimize the number of things which can go wrong, while still being able to test the basic usecases of online multiplayer connections. That is, before we can do actual multiplayer gameplay, we have to connect clients and hosts over WAN and LAN.
+
+## Connecting over IP
+![one does not simply connect over ip](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/7f7f6cb1-ef0b-41cc-930b-ab5cccf9ceed)
+
+
 TODO: Proper markup and pictures
 TODO: Links to unity resources on setting up multiplayer
 TODO: note where player log is located
 TODO: netcode 1.4.0 is broken? Fails to connect with ICMP port unreachable, but works with Netcode 1.1.0
-
-A minimal project for testing multiplayer connection over IP with Unity's Netcode for GameObjects.
 
 Tools for debugging:
 Wireshark - network diagnostics tool for looking inside network interfaces, such as the loopback interface (127.0.0.1/localhost) and ethernet/wifi connections. Use e.g. filter "udp.port == 7777 || tcp.port == 7777" to filter for packets sent to Unity's default port.
