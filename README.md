@@ -4,6 +4,16 @@ A minimal project for testing multiplayer connection over IP with Unity's Netcod
 
 The intended audience for Minimal Unity Netcode Project (MUNP) is people who want to get started with multiplayer in Unity. When starting out, there are a lot of problems which can arise when following the [official Netcode tutorials](https://docs-multiplayer.unity3d.com/netcode/current/about/). The purpose of this project is to minimize the number of things which can go wrong, while still being able to test the basic use cases of online multiplayer connections. That is, before we can start iterating actual multiplayer gameplay, we have to connect clients and hosts over WAN and LAN.
 
+Index:
+* [Connecting over IP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#connecting-over-ip)
+* [Use Cases](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#use-cases)
+  * [Localhost to Localhost](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#localhost-to-localhost)
+  * [Computer A on Lan 1 to computer A on Lan 1](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#computer-a-on-lan-1-to-computer-a-on-lan-1)
+  * [Computer A on Lan 1 to computer B on Lan 1](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#computer-a-on-lan-1-to-computer-b-on-lan-1)
+  * [Computer A on Lan 1 to computer B on Lan 2](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#computer-a-on-lan-1-to-computer-b-on-lan-2)
+* [Technical notes on MUNP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#technical-notes-on-munp)
+* [Tools for debugging](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#tools-for-debugging)
+
 ## Connecting over IP
 ![one does not simply connect over ip](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/7f7f6cb1-ef0b-41cc-930b-ab5cccf9ceed)
 
@@ -38,7 +48,7 @@ Sort of like a very pedantic postal service.
 
 ## Use Cases
 
-Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the build file here **TODO: add link**, then run the .exe file to start an instance of MUNP. **TODO: explain wireshark basics to see if packages arrive at all.**
+Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the build file here **TODO: add link**, then run the .exe file to start an instance of MUNP.
 
 ### Localhost to Localhost
 
@@ -68,14 +78,38 @@ To test that this works with MUNP, do the following.
 
 1. Computer A starts two instances of MUNP, instance a and b.
 2. Instance a enters IP e.g. 192.168.m.n and clicks Listen Server. A cube should appear in the window.
-3. Instance b enters IP e.g. 192.168.m.n and clicks client. Another cube should spawn, being rocketed away due to rigidbody collision.
+3. Instance b enters IP e.g. 192.168.m.n and clicks Client. Another cube should spawn, being rocketed away due to rigidbody collision.
 
 Note that even though both this and the localhost to localhost scenario have packets arriving at computer A sent from computer A, it is not possible to mix-and-match IPs. If you host at localhost and send to IP 192.168.m.n or vice versa the packets will be dropped.
 
 ### Computer A on Lan 1 to computer B on Lan 1
 
-If the destination is on LAN 1 the packet is routed to destination LAN IP Y at step 4 in the example packet journey instead of going through the routers remote interface.
+If the destination is on LAN 1 the packet is routed to destination LAN IP Y at step 4 in the example packet journey, instead of going through the routers remote interface. The packet then arrives at computer B as in step 7.
 
+To test that this works with MUNP, do the following.
+
+1. Computer A starts an instances of MUNP, instance a.
+2. Computer B starts an instances of MUNP, instance b.
+3. Instance a enters its LAN IP e.g. 192.168.m.n and clicks Listen Server. A cube should appear in the window.
+   - Computer A must make sure there is an inbound firewall rule allowing TCP and UDP traffic on port 7777 to reach its IP.
+5. Instance b enters computer A's LAN IP e.g. 192.168.m.n and clicks Client. Another cube should spawn, being rocketed away due to rigidbody collision.
+   - Computer B must make sure there is an outbound firewall rule allowing TCP and UDP traffic on port 7777 to reach the IP of computer A.
+  
+### Computer A on Lan 1 to computer B on Lan 2
+
+This is the scenario described in the example packet journey
+
+To test that this works with MUNP, do the following.
+
+1. Computer A starts an instances of MUNP, instance a.
+2. Computer B starts an instances of MUNP, instance b.
+3. Instance a enters its LAN IP e.g. 192.168.m.n and clicks Listen Server. A cube should appear in the window.
+   - Computer A must make sure there is an inbound firewall rule allowing TCP and UDP traffic on port 7777 to reach its IP.
+   - The router connected to computer A must have a port forwarding rule routing packets arriving for port 7777 to A's LAN IP.
+5. Instance b enters A's routers remote address IP e.g. 123.1.2.3 and clicks Client. The rmote address may be found by searching e.g. "What is my ip". After clicking Client another cube should spawn, being rocketed away due to rigidbody collision.
+   - Computer B must make sure there is an outbound firewall rule allowing TCP and UDP traffic on port 7777 to reach the IP of computer A.
+  
+Of note is that if you try using computer A and LAN 1 as computer B and LAN 2 there is a high likelihood of failure: In theory you should be able to ask your router to send a packet to its own remote address and then treat is as if it arrived over the internet. This feature is called [NAT hairpinning](https://en.wikipedia.org/wiki/Network_address_translation#NAT_hairpinning) and is not supported by all routers.
 
 ## Technical notes on MUNP
 
@@ -95,33 +129,5 @@ If the destination is on LAN 1 the packet is routed to destination LAN IP Y at s
     	Screenmanager Is Fullscreen mode
     ```
 
-Tools for debugging:
-Wireshark - network diagnostics tool for looking inside network interfaces, such as the loopback interface (127.0.0.1/localhost) and ethernet/wifi connections. Use e.g. filter "udp.port == 7777 || tcp.port == 7777" to filter for packets sent to Unity's default port.
-
-TODO: Lista alla usecases: 
-localhost <-> localhost
-LAN comp A <-> LAN comp A
-LAN comp A <-> LAN comp B
-WAN comp A <-> LAN comp A
-WAN comp A <-> LAN comp B
-WAN comp A <-> LAN comp A + B (samma som LAN comp A <-> LAN comp A + WAN comp A <-> LAN comp B?)
-WAN comp A <-> LAN comp B + C + etc.
-
-Three main use cases to try:
-Local testing - testing on your own machine
-Host one instance at 127.0.0.1 and connect to 127.0.0.1
-
-LAN testing - testing on your Local Area Network (your router network, a.k.a. "LAN")
-Host one instance at your computers LAN address, found by running e.g. "ipconfig" in the command prompt in Windows. This will be e.g. "192.168.x.y". Client connects to "192.168.x.y". Since data packets are now leaving your computer, this will require allowing those packets through your firewall. Default port for packets in Unity is 7777 (see your Unity Transport component). Theoretically, the client will need an outgoing rule allowing for port 7777 since the client is initializing the connection to the host, and the host will need an incoming rule allowing port 7777 since it is receiving the connection request. Search online for opening ports in your firewall, e.g. for Windows Defender there is at least https://www.wikihow.com/Open-Ports and https://www.howtogeek.com/394735/how-do-i-open-a-port-on-windows-firewall/.
-
-Try it using the same computer as host/client (does not work with Netcode 1.0, gives ICMP error port unreachable., and two different computers on your LAN, one being the host and the other being the client.
-
-WAN testing - testing over the internet (router to router, a.k.a. actual online multiplayer)
-Host one instance at your computers WAN address, found by going to e.g. "https://www.whatismyip.com/". This will be e.g. "123.456.987.654". Client connects to e.g. "123.456.987.654". This will require port forwaring on the hosts router as a packet arriving at the roters external/outward facing IP "123.456.987.654" will not know what the internal LAN IP of the host is. Using port forwarding we can make a rule inside the router that e.g. all packets going to port 7777 should be sent to address "192.168.x.y" (This is a form of NAT https://en.wikipedia.org/wiki/Network_address_translation). Check out https://portforward.com/ for guides on how to forward your specific router since each router has different features and runs different software. You can go to your router using your browser by typing in it's IP, the default IP is usually printed on the physical router, or you can try the usual IPs which are 192.168.0.1 and 192.168.1.1.
-
-TODO: NAT hairpinning problems, use mobile hotspot wifi to test WAN (make sure mobile is not using home router for its internet, check that the IPs are different using whatismyip).
-TODO: Multiple machines behind same LAN in same WAN game
-
-Notable pitfalls:
-*The host IP must match the client IP
-	This means if you host the game at the default IP 127.0.0.1, a computer on LAN or WAN will not be able to connect.
+## Tools for debugging
+A very useful tool for debugging is [Wireshark](https://www.wireshark.org/). Wireshark is a network diagnostics tool for looking inside network interfaces, such as the loopback interface (127.0.0.1/localhost) and ethernet/wifi connections. Use e.g. filter `udp.port == 7777 || tcp.port == 7777` to filter for packets sent to Unity's default port. This can help identify if packets are arriving at all. Another source of information is the Unity player log. Different locations for the [log file are listed here](https://docs.unity3d.com/Manual/LogFiles.html).
