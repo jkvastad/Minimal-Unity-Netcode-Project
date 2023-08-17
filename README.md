@@ -11,19 +11,19 @@ The purpose of connecting host and client is to send data packets back and forth
 
 To illustrate what can go wrong, let's follow a data packet's example journey:
 
-0. Computer A on LAN 1  ([Local Area Network](https://en.wikipedia.org/wiki/Local_area_network)) wants to establish a connection over IP with computer B, possibly on LAN 2, to play a multiplayer game.
+0. Computer A on LAN 1  ([Local Area Network](https://en.wikipedia.org/wiki/Local_area_network)) wants to establish a connection over the internet with computer B on LAN 2 to play a multiplayer game.
 1. Computer A sends a relevant data packet through its firewall.
 2. The firewall must have an outbound rule for the packet's destination port X, destination IP Y, and protocol Z (TCP or UDP).
-3. The packet is sent out through a relevant interface (e.g. wifi/ethernet with LAN IP 192.168.m.n).
-   - If the destination is computer A itself, the packet is sent through the loopback interface (a.k.a. Localhost) on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1. The packet is then looped back to the destination program at port X.
-   - If the destination is LAN or WAN ([Wide Area Network](https://en.wikipedia.org/wiki/Wide_area_network), the largest of which is the Internet) it is sent to a connected router (usually with address 192.168.0.1 or 192.168.1.1)
+3. The packet is sent out through a relevant interface (e.g. wifi/ethernet with LAN IP 192.168.m.n) to a connected router (usually with address 192.168.0.1 or 192.168.1.1).
 4. At your router, the packet is redirected (or routed) to its destination IP (possibly after passing rules in a firewall at the router).
-   - If the destination is on LAN 1 the packet is routed to destination IP Y (this skips to step 7).
-   - If the destination is a WAN address (a.k.a. remote address or public IP) the packet is sent via your router's remote address R, an address automatically provided by your ISP ([Internet Service Provider](https://en.wikipedia.org/wiki/Internet_service_provider)).
-5. Your ISP routes the packet to the receiving router at remote address Y (possibly after passing rules in a firewall at the receiving router).
-6. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP "L", not a remote address. This is where NAT ([Network Address Translation](https://en.wikipedia.org/wiki/Network_address_translation)) comes in, a simple form of which is [port forwarding](https://en.wikipedia.org/wiki/Port_forwarding). By having set up a port forwarding rule in the router for port X, the packets destination IP is changed (translated) to L from Y. The packet is then routed to L.
-7. At computer B on LAN 2 the packet must pass computer B's firewall. The firewall must have an inbound rule for the packet's port X, destination IP L, and protocol Z (TCP or UDP).
-8. Finally, the multiplayer game on computer B expecting packets on port X, destination IP L, and protocol Z (TCP or UDP) can receive the data. 
+   - The router sends the packet through its WAN facing interface. WAN or [Wide Area Network](https://en.wikipedia.org/wiki/Wide_area_network) addresses are also known as remote addresses or public IPs. The worlds largest WAN is the Internet.
+   - Your router's remote address R is automatically provided by your ISP ([Internet Service Provider](https://en.wikipedia.org/wiki/Internet_service_provider)).
+7. Your ISP routes the packet to the receiving router at remote address Y (possibly after passing rules in a firewall at the receiving router, or even the ISP).
+8. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP "L", not a remote address. This is where NAT ([Network Address Translation](https://en.wikipedia.org/wiki/Network_address_translation)) comes in, a simple form of which is [port forwarding](https://en.wikipedia.org/wiki/Port_forwarding).
+   - Check out e.g. [www.portforward.com](https://portforward.com/) for step by step guides with pictures on how to port forward your specific router.
+   - By having set up a port forwarding rule in the receiving router for port X, the packets destination IP is changed (translated) to L from Y. The packet is then routed to L.   
+10. At computer B on LAN 2 the packet must pass computer B's firewall. The firewall must have an inbound rule for the packet's port X, destination IP L, and protocol Z (TCP or UDP).
+11. Finally, the multiplayer game on computer B expecting packets on port X, destination IP L, and protocol Z (TCP or UDP) can receive the data. 
 
 _Notes on return packages:_
 * When computer B responds with packets to A, it may not be necessary to have outbound/inbound firewall rules for the return packet if the [firewalls are stateful](https://en.wikipedia.org/wiki/Stateful_firewall) (e.g. Microsoft Defender Firewall). Thus firewall rules are usually only necessary for establishing connections rather than per package.
@@ -38,11 +38,15 @@ Sort of like a very pedantic postal service.
 
 ## Use Cases
 
-Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the build file here **TODO: add link**, then run the .exe file to start an instance of MUNP.
+Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the build file here **TODO: add link**, then run the .exe file to start an instance of MUNP. **TODO: explain wireshark basics to see if packages arrive at all.**
 
 ### Localhost to Localhost
 
 The simplest connection which "should work". 
+
+Looking back at the example packet journey in [connecting over IP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/edit/master/README.md#connecting-over-ip) the packet never leaves computer A at step 3, but instead is sent to through the loopback interface (a.k.a. Localhost) on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1. The packet is then looped back to the destination program at port X.
+
+To test that this works with MUNP, do the following.
 
 1. Computer A starts two instances of MUNP, instance a and b.
 2. Instance a enters IP 127.0.0.1 and clicks Listen Server. A cube should appear in the window.
@@ -51,11 +55,20 @@ The simplest connection which "should work".
 ![MUNP Listen Server host](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/634fd191-5fbe-4019-ae4c-1f60582c2de0)
 ![MUNP Listen Server client](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/assets/9295196/beb8bbca-1c79-4e0f-82fb-62bafc7f3b97)
 
+If this does not work then...
+* You might have typed in the wrong address.
+* You might have a firewall rule blocking localhost traffic (or not allowing it).
+* You might have a bad netcode version, see [technical notes on MUNP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/edit/master/README.md#technical-notes-on-munp).
+
 ### Computer A on Lan 1 to computer A on Lan 1
 
 Similar to localhost, but using computer A's LAN IP. On e.g. Windows this can be found by running the command ipconfig in the command prompt. 
 
 * If you host on computer A localhost, you cannot connect to computer A on A's LAN IP and vice versa - the IPs must match.
+
+### Computer A on Lan 1 to computer B on Lan 1
+
+If the destination is on LAN 1 the packet is routed to destination IP Y.
 
 
 ## Technical notes on MUNP
