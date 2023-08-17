@@ -18,12 +18,12 @@ To illustrate what can go wrong, let's follow a data packet's example journey:
 4. At your router, the packet is redirected (or routed) to its destination IP (possibly after passing rules in a firewall at the router).
    - The router sends the packet through its WAN facing interface. WAN or [Wide Area Network](https://en.wikipedia.org/wiki/Wide_area_network) addresses are also known as remote addresses or public IPs. The worlds largest WAN is the Internet.
    - Your router's remote address R is automatically provided by your ISP ([Internet Service Provider](https://en.wikipedia.org/wiki/Internet_service_provider)).
-7. Your ISP routes the packet to the receiving router at remote address Y (possibly after passing rules in a firewall at the receiving router, or even the ISP).
-8. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP "L", not a remote address. This is where NAT ([Network Address Translation](https://en.wikipedia.org/wiki/Network_address_translation)) comes in, a simple form of which is [port forwarding](https://en.wikipedia.org/wiki/Port_forwarding).
+5. Your ISP routes the packet to the receiving router at remote address Y (possibly after passing rules in a firewall at the receiving router, or even the ISP).
+6. At the receiving router there is now a problem. The packet is addressed to Y... but the target computer B on LAN 2 has a LAN IP "L", not a remote address. This is where NAT ([Network Address Translation](https://en.wikipedia.org/wiki/Network_address_translation)) comes in, a simple form of which is [port forwarding](https://en.wikipedia.org/wiki/Port_forwarding).
    - Check out e.g. [www.portforward.com](https://portforward.com/) for step by step guides with pictures on how to port forward your specific router.
    - By having set up a port forwarding rule in the receiving router for port X, the packets destination IP is changed (translated) to L from Y. The packet is then routed to L.   
-10. At computer B on LAN 2 the packet must pass computer B's firewall. The firewall must have an inbound rule for the packet's port X, destination IP L, and protocol Z (TCP or UDP).
-11. Finally, the multiplayer game on computer B expecting packets on port X, destination IP L, and protocol Z (TCP or UDP) can receive the data. 
+7. At computer B on LAN 2 the packet must pass computer B's firewall. The firewall must have an inbound rule for the packet's port X, destination IP L, and protocol Z (TCP or UDP).
+8. Finally, the multiplayer game on computer B expecting packets on port X, destination IP L, and protocol Z (TCP or UDP) can receive the data. 
 
 _Notes on return packages:_
 * When computer B responds with packets to A, it may not be necessary to have outbound/inbound firewall rules for the return packet if the [firewalls are stateful](https://en.wikipedia.org/wiki/Stateful_firewall) (e.g. Microsoft Defender Firewall). Thus firewall rules are usually only necessary for establishing connections rather than per package.
@@ -44,7 +44,7 @@ Below are listed a few common use cases and related problems which may arise. Th
 
 The simplest connection which "should work". 
 
-Looking back at the example packet journey in [connecting over IP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/edit/master/README.md#connecting-over-ip) the packet never leaves computer A at step 3, but instead is sent to through the loopback interface (a.k.a. Localhost) on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1. The packet is then looped back to the destination program at port X.
+Looking back at the example packet journey in [connecting over IP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#connecting-over-ip) the packet never leaves computer A at step 3, but instead is sent to through the loopback interface (a.k.a. Localhost) on [reserved IP](https://en.wikipedia.org/wiki/Reserved_IP_addresses) 127.0.0.1. The packet is then looped back to the destination program at port X.
 
 To test that this works with MUNP, do the following.
 
@@ -58,22 +58,29 @@ To test that this works with MUNP, do the following.
 If this does not work then...
 * You might have typed in the wrong address.
 * You might have a firewall rule blocking localhost traffic (or not allowing it).
-* You might have a bad netcode version, see [technical notes on MUNP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/edit/master/README.md#technical-notes-on-munp).
+* You might have a bad netcode version, see [technical notes on MUNP](https://github.com/jkvastad/Minimal-Unity-Netcode-Project#technical-notes-on-munp).
 
 ### Computer A on Lan 1 to computer A on Lan 1
 
-Similar to localhost, but using computer A's LAN IP. On e.g. Windows this can be found by running the command ipconfig in the command prompt. 
+Similar to localhost-to-localhost, but using computer A's LAN IP. On e.g. Windows this can be found by running the command ipconfig in the command prompt. 
 
-* If you host on computer A localhost, you cannot connect to computer A on A's LAN IP and vice versa - the IPs must match.
+To test that this works with MUNP, do the following.
+
+1. Computer A starts two instances of MUNP, instance a and b.
+2. Instance a enters IP e.g. 192.168.m.n and clicks Listen Server. A cube should appear in the window.
+3. Instance b enters IP e.g. 192.168.m.n and clicks client. Another cube should spawn, being rocketed away due to rigidbody collision.
+
+Note that even though both this and the localhost to localhost scenario have packets arriving at computer A sent from computer A, it is not possible to mix-and-match IPs. If you host at localhost and send to IP 192.168.m.n or vice versa the packets will be dropped.
 
 ### Computer A on Lan 1 to computer B on Lan 1
 
-If the destination is on LAN 1 the packet is routed to destination IP Y.
+If the destination is on LAN 1 the packet is routed to destination LAN IP Y at step 4 in the example packet journey instead of going through the routers remote interface.
 
 
 ## Technical notes on MUNP
 
 * MUNP can host a listen server (server + client) to which clients may connect.
+* Unity (and other game services such as Steam and Unreal) [use port 7777 as default](https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Registered_ports).
 * Since MUNP is purposefully made to be minimal, there is no error handling for bad connections. Think of each MUNP instance as a one-shot program, if something goes wrong just close and restart.
 * Follow the "step by step project recreation.txt" if you want to go through creating MUNP manually.
 * MUNP is made for Unity 2022.2.1f1 using Netcode 1.1.0. Be wary that there is no guarantee untested Netcode packages actually work - a hard to spot problem. You can always make your own MUNP to check a specific configuration.
