@@ -1,4 +1,3 @@
-TODO: add release distributable
 # Minimal Unity Netcode Project
 A minimal project for testing multiplayer connection over IP with Unity's Netcode for GameObjects.
 
@@ -48,7 +47,7 @@ Sort of like a very pedantic postal service.
 
 ## Use Cases
 
-Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the build file here **TODO: add link**, then run the .exe file to start an instance of MUNP.
+Below are listed a few common use cases and related problems which may arise. The purpose of MUNP is to test these use cases to see if connection is successful. To use MUNP for testing, build MUNP or get the latest build [from relesaes](https://github.com/jkvastad/Minimal-Unity-Netcode-Project/releases), then run the .exe file to start an instance of MUNP.
 
 ### Localhost to Localhost
 
